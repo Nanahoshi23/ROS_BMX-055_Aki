@@ -9,53 +9,7 @@
 #include <sensor_msgs/MagneticField.h>
 
 
-// 加速度センサのアドレス
-#define Addr_Accl 0x19  // (JP1,JP2,JP3 = Open)
-// ジャイロセンサのアドレス
-#define Addr_Gyro 0x69  // (JP1,JP2,JP3 = Open)
-// 磁気センサのアドレス
-#define Addr_Mag 0x13   // (JP1,JP2,JP3 = Open)
-
-
-class MyTimer
-{
-    private :
-        long  m_last_time ;
-        long  m_d_time ;
-
-    public  :
-        MyTimer() ;
-        void Init() ;
-        void Reset() ;
-        long GetTime() ;
-
-} ;
-
-MyTimer::MyTimer() :
-    m_last_time(0),
-    m_d_time(0)
-{
-}
-
-void MyTimer::Init()
-{
-    m_last_time = micros() ;
-}
-
-void MyTimer::Reset()
-{
-    m_last_time = micros() ;
-}
-
-long MyTimer::GetTime()
-{
-    return ( micros() - m_last_time ) ;
-}
-
-
-
-
-class Filter
+class ImuFilter
 {
     private:
         float m_init_qw ;
@@ -69,12 +23,12 @@ class Filter
         float m_qz ;
 
     public:
-        Filter() ;
+        ImuFilter() ;
         void update(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz) ;
 } ;
 
 
-Filter::Filter()
+ImuFilter::ImuFilter()
 {
     m_init_qw = 1.0 ;
     m_init_qx = 0.0 ;
@@ -87,7 +41,7 @@ Filter::Filter()
 } ;
 
 
-void Filter::update(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz)
+void ImuFilter::update(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz)
 {
 }
 
@@ -191,10 +145,10 @@ void BMX_055::updateMag()
     int data[8];
     for (int i = 0; i < 8; i++)
     {
-        Wire.beginTransmission(Addr_Mag);
+        Wire.beginTransmission(m_addr_mag);
         Wire.write((0x42 + i));    // Select data register
         Wire.endTransmission();
-        Wire.requestFrom(Addr_Mag, 1);    // Request 1 byte of data
+        Wire.requestFrom(m_addr_mag, 1);    // Request 1 byte of data
         // Read 6 bytes of data
         if (Wire.available() == 1)
             data[i] = Wire.read();
@@ -345,12 +299,6 @@ float BMX_055::getZMag()
     return m_z_mag ;
 }
 
-
-
-
-
-MyTimer us_timer ;
-MyTimer angular_velocity_timer ;
 
 ros::NodeHandle  nh;
 
