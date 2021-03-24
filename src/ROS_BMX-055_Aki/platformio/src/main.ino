@@ -17,215 +17,10 @@
 #define Addr_Mag 0x13   // (JP1,JP2,JP3 = Open)
 
 
-float set_hz    = 200.8 ;    // ROSと通信してる関係上周波数をぴったり指定することはできないためフィルタに工夫を施した
-float time_bias = 0 ;
-
-
-// 加速度センサのパラメータ
-float xAccl = 0.00;
-float yAccl = 0.00;
-float zAccl = 0.00;
-
-// ジャイロセンサのパラメータ
-float xGyro = 0.00;
-float yGyro = 0.00;
-float zGyro = 0.00;
-
-// 磁気センサのパラメータ
-float   xMag  = 0;
-float   yMag  = 0;
-float   zMag  = 0;
-
-
-// 姿勢(rpy)
-float  roll=0  ;
-float  pitch=0 ;
-float  yaw=0 ;
-
-// 姿勢(四元数)
-float result_q0 = 0.00 ;
-float result_q1 = 0.00 ;
-float result_q2 = 0.00 ;
-float result_q3 = 0.00 ;
-
-float last_roll  ;
-float last_pitch ;
-float last_yaw   ;
-float now_roll   ;
-float now_pitch  ;
-float now_yaw    ;
-
-// 角加速度
-float angular_velocity_x ;
-float angular_velocity_y ;
-float angular_velocity_z ;
-float angular_velocity_dt ;
-
-
-//=====================================================================================//
-void BMX055_Init()
-{
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Accl);
-    Wire.write(0x0F); // Select PMU_Range register
-    Wire.write(0x03);   // Range = +/- 2g
-    Wire.endTransmission();
-    delay(100);
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Accl);
-    Wire.write(0x10);  // Select PMU_BW register
-    Wire.write(0x08);  // Bandwidth = 7.81 Hz
-    Wire.endTransmission();
-    delay(100);
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Accl);
-    Wire.write(0x11);  // Select PMU_LPW register
-    Wire.write(0x00);  // Normal mode, Sleep duration = 0.5ms
-    Wire.endTransmission();
-    delay(100);
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Gyro);
-    Wire.write(0x0F);  // Select Range register
-    Wire.write(0x04);  // Full scale = +/- 125 degree/s
-    Wire.endTransmission();
-    delay(100);
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Gyro);
-    Wire.write(0x10);  // Select Bandwidth register
-    Wire.write(0x07);  // ODR = 100 Hz
-    Wire.endTransmission();
-    delay(100);
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Gyro);
-    Wire.write(0x11);  // Select LPM1 register
-    Wire.write(0x00);  // Normal mode, Sleep duration = 2ms
-    Wire.endTransmission();
-    delay(100);
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Mag);
-    Wire.write(0x4B);  // Select Mag register
-    Wire.write(0x83);  // Soft reset
-    Wire.endTransmission();
-    delay(100);
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Mag);
-    Wire.write(0x4B);  // Select Mag register
-    Wire.write(0x01);  // Soft reset
-    Wire.endTransmission();
-    delay(100);
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Mag);
-    Wire.write(0x4C);  // Select Mag register
-    // Wire.write(0x00);  // Normal Mode, ODR = 10 Hz   ODR: output data rate
-    Wire.write(0x00);  // Normal Mode, ODR = 10 Hz   ODR: output data rate
-    Wire.endTransmission();
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Mag);
-    Wire.write(0x4E);  // Select Mag register
-    // Wire.write(0x84);  // X, Y, Z-Axis enabled
-    Wire.write(0xC7);  // X, Y, Z-Axis enabled
-    Wire.endTransmission();
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Mag);
-    Wire.write(0x51);  // Select Mag register
-    Wire.write(0xFF);  // No. of Repetitions for X-Y Axis = 9
-    Wire.endTransmission();
-    //------------------------------------------------------------//
-    Wire.beginTransmission(Addr_Mag);
-    Wire.write(0x52);  // Select Mag register
-    Wire.write(0xFF);  // No. of Repetitions for Z-Axis = 15
-    // Wire.write(0x16); ってなってたぞ。　15周設定なら0x0f　秋月コードが違う
-    Wire.endTransmission();
-}
-//=====================================================================================//
-void BMX055_Accl()
-{
-    int data[6];
-    for (int i = 0; i < 6; i++)
-    {
-        Wire.beginTransmission(Addr_Accl);
-        Wire.write((2 + i));// Select data register
-        Wire.endTransmission();
-        Wire.requestFrom(Addr_Accl, 1);// Request 1 byte of data
-        // Read 6 bytes of data
-        // xAccl lsb, xAccl msb, yAccl lsb, yAccl msb, zAccl lsb, zAccl msb
-        if (Wire.available() == 1)
-            data[i] = Wire.read();
-    }
-    // Convert the data to 12-bits
-    xAccl = ((data[1] * 256) + (data[0] & 0xF0)) / 16;
-    if (xAccl > 2047)  xAccl -= 4096;
-    yAccl = ((data[3] * 256) + (data[2] & 0xF0)) / 16;
-    if (yAccl > 2047)  yAccl -= 4096;
-    zAccl = ((data[5] * 256) + (data[4] & 0xF0)) / 16;
-    if (zAccl > 2047)  zAccl -= 4096;
-    xAccl = xAccl * 0.0098; // renge +-2g
-    yAccl = yAccl * 0.0098; // renge +-2g
-    zAccl = zAccl * 0.0098; // renge +-2g
-}
-//=====================================================================================//
-void BMX055_Gyro()
-{
-    int data[6];
-    for (int i = 0; i < 6; i++)
-    {
-        Wire.beginTransmission(Addr_Gyro);
-        Wire.write((2 + i));    // Select data register
-        Wire.endTransmission();
-        Wire.requestFrom(Addr_Gyro, 1);    // Request 1 byte of data
-        // Read 6 bytes of data
-        // xGyro lsb, xGyro msb, yGyro lsb, yGyro msb, zGyro lsb, zGyro msb
-        if (Wire.available() == 1)
-            data[i] = Wire.read();
-    }
-    // Convert the data
-    xGyro = (data[1] * 256) + data[0];
-    if (xGyro > 32767)  xGyro -= 65536;
-    yGyro = (data[3] * 256) + data[2];
-    if (yGyro > 32767)  yGyro -= 65536;
-    zGyro = (data[5] * 256) + data[4];
-    if (zGyro > 32767)  zGyro -= 65536;
-
-    xGyro = xGyro * 0.0038; //  Full scale = +/- 125 degree/s
-    yGyro = yGyro * 0.0038; //  Full scale = +/- 125 degree/s
-    zGyro = zGyro * 0.0038; //  Full scale = +/- 125 degree/s
-}
-//=====================================================================================//
-void BMX055_Mag()
-{
-    int data[8];
-    for (int i = 0; i < 8; i++)
-    {
-        Wire.beginTransmission(Addr_Mag);
-        Wire.write((0x42 + i));    // Select data register
-        Wire.endTransmission();
-        Wire.requestFrom(Addr_Mag, 1);    // Request 1 byte of data
-        // Read 6 bytes of data
-        // xMag lsb, xMag msb, yMag lsb, yMag msb, zMag lsb, zMag msb
-        if (Wire.available() == 1)
-            data[i] = Wire.read();
-    }
-    // Convert the data
-    xMag = ((data[1] <<8) | (data[0]>>3));
-    if (xMag > 4095)  xMag -= 8192;
-    yMag = ((data[3] <<8) | (data[2]>>3));
-    if (yMag > 4095)  yMag -= 8192;
-    zMag = ((data[5] <<8) | (data[4]>>3));
-    // if (zMag > 16383)  zMag -= 32768;
-    if (zMag > 4095)  zMag -= 8192;
-}
-
-
-
-
-
-
-
-
 class MyTimer
 {
     private :
-        long  m_old_time ;
+        long  m_last_time ;
         long  m_d_time ;
 
     public  :
@@ -237,25 +32,319 @@ class MyTimer
 } ;
 
 MyTimer::MyTimer() :
-    m_old_time(0),
+    m_last_time(0),
     m_d_time(0)
 {
 }
 
 void MyTimer::Init()
 {
-    m_old_time = micros() ;
+    m_last_time = micros() ;
 }
 
 void MyTimer::Reset()
 {
-    m_old_time = micros() ;
+    m_last_time = micros() ;
 }
 
 long MyTimer::GetTime()
 {
-    return ( micros() - m_old_time ) ;
+    return ( micros() - m_last_time ) ;
 }
+
+
+
+
+class Filter
+{
+    private:
+        float m_init_qw ;
+        float m_init_qx ;
+        float m_init_qy ;
+        float m_init_qz ;
+
+        float m_qw ;
+        float m_qx ;
+        float m_qy ;
+        float m_qz ;
+
+    public:
+        Filter() ;
+        void update(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz) ;
+} ;
+
+
+Filter::Filter()
+{
+    m_init_qw = 1.0 ;
+    m_init_qx = 0.0 ;
+    m_init_qy = 0.0 ;
+    m_init_qz = 0.0 ;
+    m_qw = m_init_qw ;
+    m_qx = m_init_qx ;
+    m_qy = m_init_qy ;
+    m_qz = m_init_qz ;
+} ;
+
+
+void Filter::update(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz)
+{
+}
+
+
+class BMX_055
+{
+    private:
+        const uint8_t m_addr_acc = 0x19 ; // (JP1,JP2,JP3 = Open);
+        const uint8_t m_addr_gyr = 0x69 ; // (JP1,JP2,JP3 = Open);
+        const uint8_t m_addr_mag = 0x13 ; // (JP1,JP2,JP3 = Open);
+
+        float m_x_acc ;
+        float m_y_acc ;
+        float m_z_acc ;
+
+        float m_x_gyr ;
+        float m_y_gyr ;
+        float m_z_gyr ;
+
+        float m_x_mag ;
+        float m_y_mag ;
+        float m_z_mag ;
+
+        void updateAcc() ;
+        void updateGyr() ;
+        void updateMag() ;
+
+    public:
+        BMX_055() ;
+        void start() ;
+        void update() ;
+        float getXAcc() ;
+        float getYAcc() ;
+        float getZAcc() ;
+        float getXGyr() ;
+        float getYGyr() ;
+        float getZGyr() ;
+        float getXMag() ;
+        float getYMag() ;
+        float getZMag() ;
+} ;
+
+BMX_055::BMX_055()
+{
+}
+
+
+void BMX_055::updateAcc()
+{
+    int data[6];
+    for (int i = 0; i < 6; i++)
+    {
+        Wire.beginTransmission(m_addr_acc);
+        Wire.write((2 + i));// Select data register
+        Wire.endTransmission();
+        Wire.requestFrom(m_addr_acc, 1);// Request 1 byte of data
+        // Read 6 bytes of data
+        if (Wire.available() == 1)
+            data[i] = Wire.read();
+    }
+    // Convert the data to 12-bits
+    m_x_acc = ((data[1] * 256) + (data[0] & 0xF0)) / 16;
+    if (m_x_acc > 2047)  m_x_acc -= 4096;
+    m_y_acc = ((data[3] * 256) + (data[2] & 0xF0)) / 16;
+    if (m_y_acc > 2047)  m_y_acc -= 4096;
+    m_z_acc = ((data[5] * 256) + (data[4] & 0xF0)) / 16;
+    if (m_z_acc > 2047)  m_z_acc -= 4096;
+    m_x_acc = m_x_acc * 0.0098; // renge +-2g
+    m_y_acc = m_y_acc * 0.0098; // renge +-2g
+    m_z_acc = m_z_acc * 0.0098; // renge +-2g
+}
+
+void BMX_055::updateGyr()
+{
+    int data[6];
+    for (int i = 0; i < 6; i++)
+    {
+        Wire.beginTransmission(m_addr_gyr);
+        Wire.write((2 + i));    // Select data register
+        Wire.endTransmission();
+        Wire.requestFrom(m_addr_gyr, 1);    // Request 1 byte of data
+        // Read 6 bytes of data
+        if (Wire.available() == 1)
+            data[i] = Wire.read();
+    }
+    // Convert the data
+    m_x_gyr = (data[1] * 256) + data[0];
+    if (m_x_gyr > 32767)  m_x_gyr -= 65536;
+    m_y_gyr = (data[3] * 256) + data[2];
+    if (m_y_gyr > 32767)  m_y_gyr -= 65536;
+    m_z_gyr = (data[5] * 256) + data[4];
+    if (m_z_gyr > 32767)  m_z_gyr -= 65536;
+
+    m_x_gyr = m_x_gyr * 0.0038; //  Full scale = +/- 125 degree/s
+    m_y_gyr = m_y_gyr * 0.0038; //  Full scale = +/- 125 degree/s
+    m_z_gyr = m_z_gyr * 0.0038; //  Full scale = +/- 125 degree/s
+}
+
+void BMX_055::updateMag()
+{
+    int data[8];
+    for (int i = 0; i < 8; i++)
+    {
+        Wire.beginTransmission(Addr_Mag);
+        Wire.write((0x42 + i));    // Select data register
+        Wire.endTransmission();
+        Wire.requestFrom(Addr_Mag, 1);    // Request 1 byte of data
+        // Read 6 bytes of data
+        if (Wire.available() == 1)
+            data[i] = Wire.read();
+    }
+    // Convert the data
+    m_x_mag = ((data[1] <<8) | (data[0]>>3));
+    if (m_x_mag > 4095)  m_x_mag -= 8192;
+    m_y_mag = ((data[3] <<8) | (data[2]>>3));
+    if (m_y_mag > 4095)  m_y_mag -= 8192;
+    m_z_mag = ((data[5] <<8) | (data[4]>>3));
+    // if (m_z_mag > 16383)  m_z_mag -= 32768;
+    if (m_z_mag > 4095)  m_z_mag -= 8192;
+}
+
+void BMX_055::start()
+{
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_acc);
+    Wire.write(0x0F); // Select PMU_Range register
+    Wire.write(0x03);   // Range = +/- 2g
+    Wire.endTransmission();
+    delay(100);
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_acc);
+    Wire.write(0x10);  // Select PMU_BW register
+    Wire.write(0x08);  // Bandwidth = 7.81 Hz
+    Wire.endTransmission();
+    delay(100);
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_acc);
+    Wire.write(0x11);  // Select PMU_LPW register
+    Wire.write(0x00);  // Normal mode, Sleep duration = 0.5ms
+    Wire.endTransmission();
+    delay(100);
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_gyr);
+    Wire.write(0x0F);  // Select Range register
+    Wire.write(0x04);  // Full scale = +/- 125 degree/s
+    Wire.endTransmission();
+    delay(100);
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_gyr);
+    Wire.write(0x10);  // Select Bandwidth register
+    Wire.write(0x07);  // ODR = 100 Hz
+    Wire.endTransmission();
+    delay(100);
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_gyr);
+    Wire.write(0x11);  // Select LPM1 register
+    Wire.write(0x00);  // Normal mode, Sleep duration = 2ms
+    Wire.endTransmission();
+    delay(100);
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_mag);
+    Wire.write(0x4B);  // Select Mag register
+    Wire.write(0x83);  // Soft reset
+    Wire.endTransmission();
+    delay(100);
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_mag);
+    Wire.write(0x4B);  // Select Mag register
+    Wire.write(0x01);  // Soft reset
+    Wire.endTransmission();
+    delay(100);
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_mag);
+    Wire.write(0x4C);  // Select Mag register
+    // Wire.write(0x00);  // Normal Mode, ODR = 10 Hz   ODR: output data rate
+    Wire.write(0x00);  // Normal Mode, ODR = 10 Hz   ODR: output data rate
+    Wire.endTransmission();
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_mag);
+    Wire.write(0x4E);  // Select Mag register
+    // Wire.write(0x84);  // X, Y, Z-Axis enabled
+    Wire.write(0xC7);  // X, Y, Z-Axis enabled
+    Wire.endTransmission();
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_mag);
+    Wire.write(0x51);  // Select Mag register
+    Wire.write(0xFF);  // No. of Repetitions for X-Y Axis = 9
+    Wire.endTransmission();
+    //------------------------------------------------------------//
+    Wire.beginTransmission(m_addr_mag);
+    Wire.write(0x52);  // Select Mag register
+    Wire.write(0xFF);  // No. of Repetitions for Z-Axis = 15
+    Wire.endTransmission();
+
+}
+
+void BMX_055::update()
+{
+    updateAcc() ;
+    updateGyr() ;
+    updateMag() ;
+}
+
+
+float BMX_055::getXAcc()
+{
+    return m_x_acc ;
+}
+
+
+float BMX_055::getYAcc()
+{
+    return m_y_acc ;
+}
+
+
+float BMX_055::getZAcc()
+{
+    return m_z_acc ;
+}
+
+
+float BMX_055::getXGyr()
+{
+    return m_x_gyr ;
+}
+
+
+float BMX_055::getYGyr()
+{
+    return m_y_gyr ;
+}
+
+
+float BMX_055::getZGyr()
+{
+    return m_z_gyr ;
+}
+
+
+float BMX_055::getXMag()
+{
+    return m_x_mag ;
+}
+
+
+float BMX_055::getYMag()
+{
+    return m_y_mag ;
+}
+
+
+float BMX_055::getZMag()
+{
+    return m_z_mag ;
+}
+
 
 
 
@@ -271,8 +360,7 @@ sensor_msgs::MagneticField mag_msg ;
 ros::Publisher imu_pub("imu/data_raw", &imu_msg);
 ros::Publisher mag_pub("mag/data", &mag_msg);
 
-float time = 0 ;
-float limit_time = 0 ;
+BMX_055 bmx_055 ;
 
 
 // サービス通信に関する新しい記述 リクエストもレスポンスも両方共文字列
@@ -292,7 +380,8 @@ void setup()
     Wire.begin() ;
 
     // センサーのセット
-    BMX055_Init();
+    //BMX055_Init();
+    bmx_055.start() ;
     delay(300);
 
     // シリアル通信の準備ができたらシリアル通信を開始(ROSとの通信)
@@ -303,71 +392,44 @@ void setup()
     nh.initNode();
     nh.advertise(imu_pub);
     nh.advertise(mag_pub);
-
-    us_timer.Init() ;
-    angular_velocity_timer.Init() ;
-
-    pinMode(LED_BUILTIN, OUTPUT);
-    pinMode(13, OUTPUT);
-
-    limit_time =  1000000 *  float( 1 / set_hz ) ;
-
 }
 
 void loop() {
 
-    BMX055_Mag() ;
-    BMX055_Gyro() ;
-    BMX055_Accl() ;
-
-    time       =  us_timer.GetTime() ;
-
-    if(  time > limit_time - 5000  ) 
-    {
-        us_timer.Reset() ;
-        // ホントの制御周期を求めて代入
-        float control_hz = 1000000 / time ;
-
-        //Serial.print( "   Time:" ) ;
-        //Serial.print( time ) ;
-        //Serial.print( "   LimitTime:" ) ;
-        //Serial.print( limit_time ) ;
-        //Serial.print( "   set_control_Hz:" ) ;
-        //Serial.print( control_hz, 4 ) ;
-        //Serial.print( "   ControlHz:" ) ; Serial.println( 1 / MadgwickFilter.getInvSampleFreq(), 4 ) ;
-
-        // MadgwickFilter.begin( control_hz ) ;
-        // MadgwickFilter.update(xGyro,yGyro,zGyro,xAccl,yAccl,zAccl, 0.0f, 0.0f, 0.0f );
-
-        imu_msg.header.frame_id ="dtw_robot1/imu_link";
-        imu_msg.header.stamp    = nh.now();
-
-        //imu_msg.orientation.x  = MadgwickFilter.getQX() ;
-        //imu_msg.orientation.y  = MadgwickFilter.getQY() ;
-        //imu_msg.orientation.z  = MadgwickFilter.getQZ() ;
-        //imu_msg.orientation.w  = MadgwickFilter.getQW() ;  // wはほぼ確定
-
-        imu_msg.angular_velocity.x = xGyro ;
-        imu_msg.angular_velocity.y = yGyro ;
-        imu_msg.angular_velocity.z = zGyro ; // [rad/sec]
+    // BMX055_Mag() ;
+    // BMX055_Gyro() ;
+    // BMX055_Accl() ;
+    bmx_055.update() ;
 
 
-        imu_msg.linear_acceleration.x = xAccl ;
-        imu_msg.linear_acceleration.y = yAccl ;
-        imu_msg.linear_acceleration.z = zAccl ;
+    imu_msg.header.frame_id ="dtw_robot1/imu_link";
+    imu_msg.header.stamp    = nh.now();
 
-        imu_pub.publish( &imu_msg ) ;
+    //imu_msg.orientation.x  = MadgwickFilter.getQX() ;
+    //imu_msg.orientation.y  = MadgwickFilter.getQY() ;
+    //imu_msg.orientation.z  = MadgwickFilter.getQZ() ;
+    //imu_msg.orientation.w  = MadgwickFilter.getQW() ;  // wはほぼ確定
 
-        mag_msg.header.frame_id ="imu_link";
-        mag_msg.header.stamp    = nh.now();
+    imu_msg.angular_velocity.x = bmx_055.getXGyr() ;
+    imu_msg.angular_velocity.y = bmx_055.getYGyr() ;
+    imu_msg.angular_velocity.z = bmx_055.getZGyr() ; // [rad/sec]
 
-        mag_msg.magnetic_field.x = xMag ;
-        mag_msg.magnetic_field.y = yMag ;
-        mag_msg.magnetic_field.z = zMag ;
 
-        mag_pub.publish( &mag_msg ) ;
+    imu_msg.linear_acceleration.x = bmx_055.getXAcc() ;
+    imu_msg.linear_acceleration.y = bmx_055.getYAcc() ;
+    imu_msg.linear_acceleration.z = bmx_055.getZAcc() ;
 
-        // 受け取るまでロックする　多分Serial.avaiable()すればロック回避できちゃうかもしれない　別の使い方できる的な　
-        nh.spinOnce();
-    }
+    imu_pub.publish( &imu_msg ) ;
+
+    mag_msg.header.frame_id ="imu_link";
+    mag_msg.header.stamp    = nh.now();
+
+    mag_msg.magnetic_field.x = bmx_055.getXMag() ;
+    mag_msg.magnetic_field.y = bmx_055.getYMag() ;
+    mag_msg.magnetic_field.z = bmx_055.getZMag() ;
+
+    mag_pub.publish( &mag_msg ) ;
+
+    // 受け取るまでロックする　多分Serial.avaiable()すればロック回避できちゃうかもしれない　別の使い方できる的な　
+    nh.spinOnce();
 }
