@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>SRBPrject</name>
+  <name>ros_bmx-055_aki</name>
   <version>0.0.0</version>
-  <description>The SRBPrject package</description>
+  <description>The ros_bmx-055_aki package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/SRBPrject</url> -->
+  <!-- <url type="website">http://wiki.ros.org/ROS_BMX-055_Aki</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
