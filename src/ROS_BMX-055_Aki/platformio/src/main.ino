@@ -16,10 +16,6 @@
 // 磁気センサのアドレス
 #define Addr_Mag 0x13   // (JP1,JP2,JP3 = Open)
 
-#define GRYO 1
-#define ACCL 2
-#define MAG 3
-#define XYZ_ROTATION 4
 
 float set_hz    = 200.8 ;    // ROSと通信してる関係上周波数をぴったり指定することはできないためフィルタに工夫を施した
 float time_bias = 0 ;
