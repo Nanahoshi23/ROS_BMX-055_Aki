@@ -9,53 +9,25 @@
 #include <sensor_msgs/MagneticField.h>
 
 #include <BMX_055.h>
-
-class ImuFilter
-{
-    private:
-        float m_init_qw ;
-        float m_init_qx ;
-        float m_init_qy ;
-        float m_init_qz ;
-
-        float m_qw ;
-        float m_qx ;
-        float m_qy ;
-        float m_qz ;
-
-    public:
-        ImuFilter() ;
-        void update(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz) ;
-} ;
+#include <ImuFilter.h>
 
 
-ImuFilter::ImuFilter()
-{
-    m_init_qw = 1.0 ;
-    m_init_qx = 0.0 ;
-    m_init_qy = 0.0 ;
-    m_init_qz = 0.0 ;
-    m_qw = m_init_qw ;
-    m_qx = m_init_qx ;
-    m_qy = m_init_qy ;
-    m_qz = m_init_qz ;
-} ;
-
-
-void ImuFilter::update(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz)
-{
-}
-
-
+// node handle
 ros::NodeHandle  nh;
 
+// sensor message
 sensor_msgs::Imu           imu_msg ;
 sensor_msgs::MagneticField mag_msg ;
 
+// publisher
 ros::Publisher imu_pub("imu/data_raw", &imu_msg);
 ros::Publisher mag_pub("mag/data", &mag_msg);
 
+// BMX-055
 BMX_055 bmx_055 ;
+
+// ImuFilter
+ImuFilter imu_filter ;
 
 
 void setup()
@@ -76,6 +48,8 @@ void setup()
     nh.initNode();
     nh.advertise(imu_pub);
     nh.advertise(mag_pub);
+
+    imu_filter.start() ;
 }
 
 void loop() {
@@ -84,15 +58,18 @@ void loop() {
     // BMX055_Gyro() ;
     // BMX055_Accl() ;
     bmx_055.update() ;
+    imu_filter.update(bmx_055.getXGyr(),bmx_055.getYGyr(), bmx_055.getZGyr(),
+                        bmx_055.getXAcc(), bmx_055.getYAcc(), bmx_055.getZAcc(),
+                        bmx_055.getXMag(), bmx_055.getYMag(), bmx_055.getZMag()) ;
 
 
     imu_msg.header.frame_id ="dtw_robot1/imu_link";
     imu_msg.header.stamp    = nh.now();
 
-    //imu_msg.orientation.x  = MadgwickFilter.getQX() ;
-    //imu_msg.orientation.y  = MadgwickFilter.getQY() ;
-    //imu_msg.orientation.z  = MadgwickFilter.getQZ() ;
-    //imu_msg.orientation.w  = MadgwickFilter.getQW() ;  // wはほぼ確定
+    imu_msg.orientation.x  = imu_filter.getQX() ;
+    imu_msg.orientation.y  = imu_filter.getQY() ;
+    imu_msg.orientation.z  = imu_filter.getQZ() ;
+    imu_msg.orientation.w  = imu_filter.getQW() ;  // wはほぼ確定
 
     imu_msg.angular_velocity.x = bmx_055.getXGyr() ;
     imu_msg.angular_velocity.y = bmx_055.getYGyr() ;

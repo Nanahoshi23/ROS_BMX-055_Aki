@@ -7,27 +7,26 @@ MyTimer::MyTimer() :
 {
 }
 
-void MyTimer::start()
+void MyTimer::Init()
 {
     m_last_time = micros() ;
 }
 
-void MyTimer::reset()
+void MyTimer::Reset()
 {
     m_last_time = micros() ;
 }
 
-float MyTimer::getSec()
+float MyTimer::GetSec()
 {
-    return ( micros() - m_last_time ) / 1000000.0 ;
 }
 
-long MyTimer::getMSec()
+long MyTimer::GetMS()
 {
     return ( micros() - m_last_time ) / 1000 ;
 }
 
-long MyTimer::getUSec()
+long MyTimer::GetUS()
 {
     return ( micros() - m_last_time ) ;
 }

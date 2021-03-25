@@ -1,5 +1,5 @@
-#ifndef MadgwickAHRS_h
-#define MadgwickAHRS_h
+#ifndef __BMX_055_H__
+#define __BMX_055_H__
 
 class BMX_055
 {

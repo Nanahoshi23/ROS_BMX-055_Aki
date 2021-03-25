@@ -1,5 +1,5 @@
-#ifndef MadgwickAHRS_h
-#define MadgwickAHRS_h
+#ifndef __MY_TIMER_H__
+#define __MY_TIMER_H__
 
 class MyTimer
 {
@@ -9,9 +9,12 @@ class MyTimer
 
     public  :
         MyTimer() ;
-        void Init() ;
-        void Reset() ;
-        long GetTime() ;
+        void start() ;
+        void reset() ;
+        float getSec() ;
+        long getMSec() ;
+        long getUSec() ;
+        
 
 } ;
 
