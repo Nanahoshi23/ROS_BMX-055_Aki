@@ -5,7 +5,12 @@
         <param name="baud" value="57600" />
     </node>
 
+    <!-- imu_data_to_pose -->
+    <node pkg="ros_bmx_055_aki" name="imu_data_to_pose" type="imu_data_to_pose">
+    </node>
+
+
     <!-- rviz -->
-    <arg name="rvizconfig" default="$(find ros_bmx-055_aki)/rviz/BMX-055.rviz" />
+    <arg name="rvizconfig" default="$(find ros_bmx_055_aki)/rviz/BMX-055.rviz" />
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 </launch>

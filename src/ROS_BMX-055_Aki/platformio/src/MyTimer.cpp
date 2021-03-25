@@ -19,12 +19,12 @@ void MyTimer::reset()
 
 float MyTimer::getSec()
 {
-    return ( micros() - m_last_time ) / 1000000.0 ;
+    return (( micros() - m_last_time ) / (1000000.0))  ;
 }
 
 long MyTimer::getMSec()
 {
-    return ( micros() - m_last_time ) / 1000 ;
+    return ( micros() - m_last_time ) / 1000.0 ;
 }
 
 long MyTimer::getUSec()

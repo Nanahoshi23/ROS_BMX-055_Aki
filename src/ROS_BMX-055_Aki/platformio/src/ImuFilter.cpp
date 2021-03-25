@@ -29,9 +29,9 @@ void ImuFilter::update(float gx, float gy, float gz, float ax, float ay, float a
 {
     // posture estimation
     m_delta_qw = -gx*m_qx -gy*m_qy -gz*m_qz ;
-    m_delta_qx = -gx*m_qw +gz*m_qy -gy*m_qz ;
-    m_delta_qy = -gy*m_qw +gz*m_qx +gx*m_qz ;
-    m_delta_qz = +gz*m_qw +gy*m_qx +gx*m_qy ;
+    m_delta_qx = +gx*m_qw +gz*m_qy -gy*m_qz ;
+    m_delta_qy = +gy*m_qw -gz*m_qx +gx*m_qz ;
+    m_delta_qz = +gz*m_qw +gy*m_qx -gx*m_qy ;
 
     // calculate control cycle
     float delta_control_time = m_timer.getSec() ;

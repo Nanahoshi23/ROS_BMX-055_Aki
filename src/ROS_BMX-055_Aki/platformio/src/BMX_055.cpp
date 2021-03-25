@@ -53,9 +53,9 @@ void BMX_055::updateGyr()
     m_z_gyr = (data[5] * 256) + data[4];
     if (m_z_gyr > 32767)  m_z_gyr -= 65536;
 
-    m_x_gyr = m_x_gyr * 0.0038; //  Full scale = +/- 125 degree/s
-    m_y_gyr = m_y_gyr * 0.0038; //  Full scale = +/- 125 degree/s
-    m_z_gyr = m_z_gyr * 0.0038; //  Full scale = +/- 125 degree/s
+    m_x_gyr = m_x_gyr * 0.0038 * (2*3.14/360); //  Full scale = +/- 125 degree/s
+    m_y_gyr = m_y_gyr * 0.0038 * (2*3.14/360); //  Full scale = +/- 125 degree/s
+    m_z_gyr = m_z_gyr * 0.0038 * (2*3.14/360); //  Full scale = +/- 125 degree/s
 }
 
 void BMX_055::updateMag()
