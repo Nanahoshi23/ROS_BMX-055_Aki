@@ -17,14 +17,6 @@ Vector3D::Vector3D(float x, float y, float z)
 }
 
 
-void Vector3D::setVector3D(float x, float y, float z)
-{
-    this->setX(x) ;
-    this->setY(y) ;
-    this->setZ(z) ;
-}
-
-
 Vector3D Vector3D::operator = (const Vector3D& other)
 {
     this->setX(other.getX()) ;
@@ -140,6 +132,14 @@ float Vector3D::getY() const
 float Vector3D::getZ() const
 {
     return this->m_z ;
+}
+
+
+void Vector3D::setVector3D(float x, float y, float z)
+{
+    this->setX(x) ;
+    this->setY(y) ;
+    this->setZ(z) ;
 }
 
 

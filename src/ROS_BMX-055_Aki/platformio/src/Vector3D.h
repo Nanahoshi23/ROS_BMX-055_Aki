@@ -13,8 +13,6 @@ class Vector3D
         Vector3D() ;
         Vector3D(float x, float y, float z) ;
 
-        void setVector3D(float x, float y, float z) ;
-
         Vector3D operator = (const Vector3D& other) ;
         Vector3D operator += (const Vector3D& other) ;
         Vector3D operator -= (const Vector3D& other) ;
@@ -38,6 +36,7 @@ class Vector3D
         float getY() const;
         float getZ() const;
 
+        void setVector3D(float x, float y, float z) ;
         void setX(float x) ;
         void setY(float y) ;
         void setZ(float z) ;
