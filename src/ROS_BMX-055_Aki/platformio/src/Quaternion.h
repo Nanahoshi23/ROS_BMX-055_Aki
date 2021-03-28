@@ -16,9 +16,14 @@ class Quaternion
         Quaternion(float qw, float qx, float qy, float qz) ;
         Quaternion(Vector3D unit_vector, float radian_angle) ;
         Quaternion(Vector3D base_vector, Vector3D target_vector) ;
+        Quaternion(Vector3D base_vector, Vector3D target_vector, float alpha) ;
+        
         Quaternion operator = (const Quaternion& other) ;
+        Quaternion operator * (const Quaternion& other) const;
+        
 
-        Vector3D rotateVector3D(Vector3D base_vector) const ;
+        Quaternion normalize();
+        Vector3D rotateVector3D(Vector3D base_vector);
 
         float getQW() const;
         float getQX() const;
