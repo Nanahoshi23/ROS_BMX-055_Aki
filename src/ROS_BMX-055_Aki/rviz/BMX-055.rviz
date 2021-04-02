@@ -7,6 +7,8 @@ Panels:
         - /Global Options1
         - /Status1
         - /Pose1
+        - /Pose2
+        - /Marker1
       Splitter Ratio: 0.5
     Tree Height: 755
   - Class: rviz/Selection
@@ -75,6 +77,29 @@ Visualization Manager:
       Topic: /imu_pose
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.100000001
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.300000012
+      Head Radius: 0.100000001
+      Name: Pose
+      Shaft Length: 1
+      Shaft Radius: 0.0500000007
+      Shape: Axes
+      Topic: /mag_pose
+      Unreliable: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mag_marker
+      Name: Marker
+      Namespaces:
+        mag_val_display: true
+      Queue Size: 2
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -100,25 +125,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 7.39419651
+      Distance: 4.77238369
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: -0.08739236
+        Y: 0.595956087
+        Z: 0.201184347
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.665398479
+      Pitch: 1.18479669
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.83857918
+      Yaw: 0.0754378811
     Saved: ~
 Window Geometry:
   Displays:

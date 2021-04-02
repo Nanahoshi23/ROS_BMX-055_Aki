@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <node pkg="rosserial_python" name="imu_node" type="serial_node.py">
+    <node pkg="rosserial_python" name="imu_node" type="serial_node.py" output="screen">
         <param name="port" value="/dev/ttyACM0" />
         <param name="baud" value="57600" />
     </node>
 
     <!-- imu_data_to_pose -->
     <node pkg="ros_bmx_055_aki" name="imu_data_to_pose" type="imu_data_to_pose">
+    </node>
+
+    <!-- mag_data_to_pose -->
+    <node pkg="ros_bmx_055_aki" name="mag_data_to_pose" type="mag_data_to_pose">
     </node>
 
     <!-- rviz -->

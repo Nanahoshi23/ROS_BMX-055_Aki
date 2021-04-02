@@ -25,3 +25,6 @@ include_directories(
 add_executable(imu_data_to_pose src/imu_data_to_pose.cpp ) 
 target_link_libraries(imu_data_to_pose ${catkin_LIBRARIES} )
 
+add_executable(mag_data_to_pose src/mag_data_to_pose.cpp ) 
+target_link_libraries(mag_data_to_pose ${catkin_LIBRARIES} )
+
