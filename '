@@ -1,0 +1,32 @@
+#include <Arduino.h>
+#include <MyTimer.h>
+
+MyTimer::MyTimer() :
+    m_last_time(0),
+    m_d_time(0)
+{
+}
+
+void MyTimer::Init()
+{
+    m_last_time = micros() ;
+}
+
+void MyTimer::Reset()
+{
+    m_last_time = micros() ;
+}
+
+float MyTimer::GetSec()
+{
+}
+
+long MyTimer::GetMS()
+{
+    return ( micros() - m_last_time ) / 1000 ;
+}
+
+long MyTimer::GetUS()
+{
+    return ( micros() - m_last_time ) ;
+}
